@@ -25,32 +25,52 @@ const fetchMyIP = function(callback) {
 };
 
 //function to take in an IP address and return latitude and longitude
-const fetchCoordsByIP = function (ip, callback) {
+const fetchCoordsByIP = function(ip, callback) {
   request(`http://ipwho.is/${ip}`, (error, response, body) => {
 
-  if (error) {
-    callback(error, null);
-    return;
-  }
+    if (error) {
+      callback(error, null);
+      return;
+    }
 
-  const parsedBody = JSON.parse(body);
+    const parsedBody = JSON.parse(body);
 
-  if (!parsedBody.success) {
-    const message = `Success status was ${parsedBody.success}. Server message says: ${parsedBody.message} when fetching for IP ${parsedBody.ip}`;
-    callback(Error(message), null);
-    return;
-  }
+    if (!parsedBody.success) {
+      const message = `Success status was ${parsedBody.success}. Server message says: ${parsedBody.message} when fetching for IP ${parsedBody.ip}`;
+      callback(Error(message), null);
+      return;
+    }
 
-  const { latitude, longitude } = parsedBody;
+    const { latitude, longitude } = parsedBody;
 
-  callback(null, {latitude, longitude});
+    callback(null, { latitude, longitude });
+  });
+};
+
+//function that returns how many times iss passes over given coordinates
+const fetchISSFlyOverTimes = function(coords, callback) {
+  const url = `https://iss-flyover.herokuapp.com/json/?lat=${coords.latitude}&lon=${coords.longitude}`;
+
+  request(url, (error, response, body) => {
+    if (error) {
+      callback(error, null);
+      return;
+    }
+
+    if (response.statusCode !== 200) {
+      callback(Error(`Status code ${response.statusCode} when fetching ISS pass times: ${body}`), null);
+      return;
+    }
+
+    const passes = JSON.parse(body).response;
+    callback(null, passes);
   });
 };
 
 
 
-
-
-module.exports = { 
+module.exports = {
   fetchMyIP,
-  fetchCoordsByIP };
+  fetchCoordsByIP,
+  fetchISSFlyOverTimes
+};
